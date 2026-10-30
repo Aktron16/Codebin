@@ -3,5 +3,6 @@
   "name": "codebin",
   "version": "1.0.0",
   "description": "CodeBin universal binary codebase memory platform for AI agents",
-  "skills_directory": "skill"
+  "skills_directory": "./skill",
+  "tools_directory": "./scripts"
 }

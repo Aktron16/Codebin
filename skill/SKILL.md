@@ -129,6 +129,24 @@ from scripts.tool_codebin import codebin_status
 stats = codebin_status()
 ```
 
+### 5. MCP Server (JSON-RPC stdio)
+For platforms using the Model Context Protocol (Cursor, Windsurf, Claude Desktop, etc.):
+```json
+{
+  "mcpServers": {
+    "codebin": {
+      "command": "python",
+      "args": ["scripts/mcp_server.py"]
+    }
+  }
+}
+```
+Exposes standard MCP tools with identical parameters:
+- `codebin_lookup(symbol_name: str, project_dir: str = ".")`
+- `codebin_search(query: str, symbol_type: Optional[str] = None, project_dir: str = ".")`
+- `codebin_scan(project_dir: str = ".", force_path: Optional[str] = None)`
+- `codebin_status(project_dir: str = ".")`
+
 ## CLI Usage (Terminal)
 ```bash
 python scripts/codebin_engine.py init              # Initialize .codebin directory
