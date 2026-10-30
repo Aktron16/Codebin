@@ -15,3 +15,5 @@ node_modules/
 git_status.txt
 package.json
 package-lock.json
+
+*.bak
