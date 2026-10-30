@@ -1,0 +1,17 @@
+# CodeBin runtime files
+.codebin/
+*.lock
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Temporary / testing
+node_modules/
+git_status.txt
+package.json
+package-lock.json

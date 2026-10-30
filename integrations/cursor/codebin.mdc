@@ -1,0 +1,13 @@
+---
+description: CodeBin binary indexer for instant O(1) codebase symbol lookups
+globs: *
+alwaysApply: true
+---
+
+# CodeBin Rules for Cursor
+
+When generating code, analyzing bugs, or answering questions about the architecture:
+- **Do not read multiple files to locate definitions.**
+- Check the binary symbol index via MCP tool `codebin_lookup` or terminal `python scripts/codebin_engine.py lookup <name>`.
+- Use `codebin_search` to find relevant functions and classes before proposing changes.
+- After substantial edits to source code files, execute `python scripts/codebin_engine.py scan` to refresh byte offsets.
