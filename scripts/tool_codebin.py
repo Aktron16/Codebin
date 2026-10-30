@@ -152,6 +152,24 @@ TOOL_SCHEMAS = [
                     "type": "string",
                     "description": "Root directory of the project to scan.",
                     "default": "."
+                },
+                "force_path": {
+                    "type": "string",
+                    "description": "Optional specific file or folder to re-index."
+                }
+            }
+        }
+    },
+    {
+        "name": "codebin_status",
+        "description": "Returns summary statistics about the binary index (active symbols, file size, last scan time).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "project_dir": {
+                    "type": "string",
+                    "description": "Root directory of the project to inspect.",
+                    "default": "."
                 }
             }
         }
@@ -160,4 +178,41 @@ TOOL_SCHEMAS = [
 
 
 if __name__ == "__main__":
-    print(json.dumps(TOOL_SCHEMAS, indent=2))
+    import argparse
+    parser = argparse.ArgumentParser(description="CodeBin Agent CLI Tool Interface")
+    subparsers = parser.add_subparsers(dest="subcommand")
+
+    p_lookup = subparsers.add_parser("lookup", help="Lookup a symbol")
+    p_lookup.add_argument("--symbol_name", "--name", dest="symbol_name", required=True)
+    p_lookup.add_argument("--project_dir", default=".")
+
+    p_search = subparsers.add_parser("search", help="Search for symbols")
+    p_search.add_argument("--query", required=True)
+    p_search.add_argument("--symbol_type", "--type", dest="symbol_type", default=None)
+    p_search.add_argument("--project_dir", default=".")
+
+    p_scan = subparsers.add_parser("scan", help="Scan codebase")
+    p_scan.add_argument("--project_dir", default=".")
+    p_scan.add_argument("--force_path", default=None)
+
+    p_status = subparsers.add_parser("status", help="Get index status")
+    p_status.add_argument("--project_dir", default=".")
+
+    p_schemas = subparsers.add_parser("schemas", help="Output tool schemas")
+
+    args = parser.parse_args()
+
+    if args.subcommand == "lookup":
+        res = codebin_lookup(args.symbol_name, project_dir=args.project_dir)
+        print(json.dumps(res, indent=2))
+    elif args.subcommand == "search":
+        res = codebin_search(args.query, symbol_type=args.symbol_type, project_dir=args.project_dir)
+        print(json.dumps(res, indent=2))
+    elif args.subcommand == "scan":
+        res = codebin_scan(project_dir=args.project_dir, force_path=args.force_path)
+        print(json.dumps(res, indent=2))
+    elif args.subcommand == "status":
+        res = codebin_status(project_dir=args.project_dir)
+        print(json.dumps(res, indent=2))
+    else:
+        print(json.dumps(TOOL_SCHEMAS, indent=2))

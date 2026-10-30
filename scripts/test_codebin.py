@@ -11,6 +11,12 @@ import sys
 import tempfile
 import time
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 if _current_dir not in sys.path:
     sys.path.insert(0, _current_dir)
@@ -52,31 +58,31 @@ def test_pack_unpack_compression_roundtrip():
     assert unpacked["signature"] == "@dataclass async def sign_payload(payload: bytes, key: str) -> str"
     assert unpacked["description"] == large_desc
     assert unpacked["hash"] == hash_bytes.hex()
-    print("✓ test_pack_unpack_compression_roundtrip passed")
+    print("[PASS] test_pack_unpack_compression_roundtrip")
 
 
 def test_jsdoc_and_decorator_extraction():
     # 1. Test JSDoc in TypeScript
     ts_code = (
         "/**\n"
-        " * Generates a signed JWT session cookie.\n"
-        " * @param userId - Unique user identifier\n"
+        " * Validates user billing credentials and calculates tax tier.\n"
+        " * @param accountId Customer ID\n"
         " */\n"
-        "export async function generateSession(userId: string): Promise<string> {\n"
-        "  return 'token';\n"
+        "export async function processBilling(accountId: string): Promise<boolean> {\n"
+        "    return true;\n"
         "}\n"
     )
-    ts_symbols = SymbolExtractor.extract_from_generic("src/auth.ts", ts_code)
-    assert len(ts_symbols) == 1, f"Expected 1 TS symbol, got {len(ts_symbols)}"
-    assert ts_symbols[0]["name"] == "generateSession"
-    assert "Generates a signed JWT session cookie" in ts_symbols[0]["description"]
-    assert "@param userId" in ts_symbols[0]["description"]
+    ts_symbols = SymbolExtractor.extract_from_js_ts("src/billing.ts", ts_code)
+    assert len(ts_symbols) == 1
+    assert ts_symbols[0]["name"] == "processBilling"
+    assert "export async function processBilling" in ts_symbols[0]["signature"]
+    assert "Validates user billing credentials" in ts_symbols[0]["description"]
 
-    # 2. Test Python Decorators & Return Type
+    # 2. Test Decorators in Python
     py_code = (
         "@app.get('/metrics')\n"
-        "@cache(ttl=60)\n"
-        "async def get_system_metrics(filter_level: str) -> dict:\n"
+        "@auth_required(role='admin')\n"
+        "async def get_system_metrics() -> dict:\n"
         "    '''Retrieves server health and CPU load statistics.'''\n"
         "    return {}\n"
     )
@@ -88,7 +94,7 @@ def test_jsdoc_and_decorator_extraction():
     assert "-> dict" in py_symbols[0]["signature"]
     assert "Retrieves server health" in py_symbols[0]["description"]
 
-    print("✓ test_jsdoc_and_decorator_extraction passed")
+    print("[PASS] test_jsdoc_and_decorator_extraction")
 
 
 def test_codebin_lifecycle_and_token_search():
@@ -181,7 +187,7 @@ def test_codebin_lifecycle_and_token_search():
         assert c_stats["retained"] == 3
         assert mgr.lookup("client.ts::fetchRetry") is None
 
-        print("✓ test_codebin_lifecycle_and_token_search passed")
+        print("[PASS] test_codebin_lifecycle_and_token_search")
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 

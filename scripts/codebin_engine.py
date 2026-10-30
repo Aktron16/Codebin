@@ -464,6 +464,8 @@ class SymbolExtractor:
                     break
         return symbols
 
+    extract_from_js_ts = extract_from_generic
+
     @classmethod
     def extract(cls, file_path: str, project_root: str) -> List[Dict[str, Any]]:
         full_path = os.path.join(project_root, file_path)

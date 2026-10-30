@@ -1,6 +1,64 @@
 ---
 name: codebin
 description: "Binary symbol indexer and O(1) codebase cache. Use to instantly look up functions, classes, variables, types, signatures, and change history without repeatedly reading raw files. Saves context window tokens and speeds up codebase navigation."
+tools:
+  - name: codebin_lookup
+    description: "Instantly retrieves the description, signature, type, and file location of a function, class, variable, or type from the binary database without reading entire source files."
+    command: "python scripts/tool_codebin.py lookup --symbol_name {symbol_name} [--project_dir {project_dir}]"
+    parameters:
+      type: object
+      properties:
+        symbol_name:
+          type: string
+          description: "The name or qualified path of the symbol to retrieve (e.g. 'calculate_tax' or 'src/auth.py::login')."
+        project_dir:
+          type: string
+          description: "Optional root directory of the project. Defaults to '.'."
+          default: "."
+      required:
+        - symbol_name
+  - name: codebin_search
+    description: "Performs a fast multi-token search across all indexed symbol names and descriptions."
+    command: "python scripts/tool_codebin.py search --query {query} [--symbol_type {symbol_type}] [--project_dir {project_dir}]"
+    parameters:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "Keywords or substrings to match against symbol names and docstrings."
+        symbol_type:
+          type: string
+          enum: ["F", "C", "V", "T", "M"]
+          description: "Optional filter: 'F' (Function), 'C' (Class), 'V' (Variable), 'T' (Type), 'M' (Method)."
+        project_dir:
+          type: string
+          description: "Optional root directory of the project. Defaults to '.'."
+          default: "."
+      required:
+        - query
+  - name: codebin_scan
+    description: "Scans the project files, extracts new or modified symbols, records removals, and updates the binary database and index map."
+    command: "python scripts/tool_codebin.py scan [--project_dir {project_dir}] [--force_path {force_path}]"
+    parameters:
+      type: object
+      properties:
+        project_dir:
+          type: string
+          description: "Root directory of the project to scan. Defaults to '.'."
+          default: "."
+        force_path:
+          type: string
+          description: "Optional specific file or folder to re-index."
+  - name: codebin_status
+    description: "Returns summary statistics about the binary index (active symbols, file size, last scan time)."
+    command: "python scripts/tool_codebin.py status [--project_dir {project_dir}]"
+    parameters:
+      type: object
+      properties:
+        project_dir:
+          type: string
+          description: "Optional root directory of the project. Defaults to '.'."
+          default: "."
 ---
 
 # /codebin
