@@ -157,7 +157,8 @@ TOOL_SCHEMAS = [
                     "type": "string",
                     "description": "Optional specific file or folder to re-index."
                 }
-            }
+            },
+            "required": []
         }
     },
     {
@@ -171,7 +172,8 @@ TOOL_SCHEMAS = [
                     "description": "Root directory of the project to inspect.",
                     "default": "."
                 }
-            }
+            },
+            "required": []
         }
     }
 ]

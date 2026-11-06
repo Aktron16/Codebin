@@ -2,7 +2,8 @@
 Comprehensive self-check and verification test suite for CodeBin.
 Tests binary packing/unpacking with zlib compression, JSDoc harvesting,
 decorator preservation, incremental scanning, change tracking,
-tombstoning, direct O(1) seek lookups, token search, and compaction.
+tombstoning, direct O(1) seek lookups, token search, compaction,
+and MCP stdio JSON-RPC server compliance.
 """
 
 import os
@@ -148,6 +149,7 @@ def test_codebin_lifecycle_and_token_search():
         retry_matches = mgr.search("network retry")
         assert len(retry_matches) >= 1
         assert retry_matches[0]["name"] == "retryRequest"
+
         # 4. Modify file (incremental update)
         time.sleep(0.05)
         with open(py_file, "w", encoding="utf-8") as f:
@@ -185,19 +187,64 @@ def test_codebin_lifecycle_and_token_search():
         assert c_stats["purged"] == 1
         assert c_stats["retained"] == 3
         assert mgr.lookup("client.ts::retryRequest") is None
-        # 6. Compaction (purge tombstones)
-        c_stats = mgr.compact()
-        assert c_stats["purged"] == 1
-        assert c_stats["retained"] == 3
-        assert mgr.lookup("client.ts::fetchRetry") is None
 
         print("[PASS] test_codebin_lifecycle_and_token_search")
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
+def test_mcp_server_protocol():
+    from mcp_server import handle_request
+    from tool_codebin import TOOL_SCHEMAS
+
+    # 1. TOOL_SCHEMAS required property check for strict MCP validators
+    scan_schema = next(s for s in TOOL_SCHEMAS if s["name"] == "codebin_scan")
+    status_schema = next(s for s in TOOL_SCHEMAS if s["name"] == "codebin_status")
+    assert "required" in scan_schema["parameters"] and scan_schema["parameters"]["required"] == []
+    assert "required" in status_schema["parameters"] and status_schema["parameters"]["required"] == []
+
+    # 2. JSON-RPC 2.0 notifications are ignored (return None, no reply)
+    assert handle_request({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None
+    assert handle_request({"jsonrpc": "2.0", "id": None, "method": "notifications/initialized"}) is None
+
+    # 3. Ping support
+    ping_resp = handle_request({"jsonrpc": "2.0", "id": 100, "method": "ping"})
+    assert ping_resp == {"jsonrpc": "2.0", "id": 100, "result": {}}
+
+    # 4. Protocol version negotiation in initialize
+    init_default = handle_request({"jsonrpc": "2.0", "id": 1, "method": "initialize"})
+    assert init_default["result"]["protocolVersion"] == "2024-11-05"
+
+    init_custom = handle_request({
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "initialize",
+        "params": {"protocolVersion": "2024-10-07"}
+    })
+    assert init_custom["result"]["protocolVersion"] == "2024-10-07"
+
+    # 5. Tool call error contract returns isError: True in result content
+    err_resp = handle_request({
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+            "name": "codebin_lookup",
+            "arguments": {"symbol_name": "dummy", "project_dir": 12345}
+        }
+    })
+    assert "result" in err_resp
+    assert err_resp["result"]["isError"] is True
+    assert "content" in err_resp["result"]
+    assert err_resp["result"]["content"][0]["type"] == "text"
+    assert err_resp["result"]["content"][0]["text"].startswith("Error:")
+
+    print("[PASS] test_mcp_server_protocol")
+
+
 if __name__ == "__main__":
     test_pack_unpack_compression_roundtrip()
     test_jsdoc_and_decorator_extraction()
     test_codebin_lifecycle_and_token_search()
+    test_mcp_server_protocol()
     print("\nALL CODEBIN ENHANCED TESTS PASSED!")

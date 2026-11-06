@@ -8,6 +8,14 @@ import json
 import os
 import sys
 
+if sys.platform == "win32":
+    for stream in (sys.stdin, sys.stdout):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8")
+            except Exception:
+                pass
+
 _scripts_dir = os.path.dirname(os.path.abspath(__file__))
 if _scripts_dir not in sys.path:
     sys.path.insert(0, _scripts_dir)
@@ -21,7 +29,10 @@ from tool_codebin import (
 )
 
 
-def handle_request(req: dict) -> dict:
+def handle_request(req: dict):
+    if "id" not in req or req.get("id") is None:
+        return None
+
     req_id = req.get("id")
     method = req.get("method")
 
@@ -30,10 +41,17 @@ def handle_request(req: dict) -> dict:
             "jsonrpc": "2.0",
             "id": req_id,
             "result": {
-                "protocolVersion": "2024-11-05",
+                "protocolVersion": req.get("params", {}).get("protocolVersion", "2024-11-05"),
                 "capabilities": {"tools": {}},
                 "serverInfo": {"name": "codebin-mcp", "version": "1.0.0"},
             },
+        }
+
+    elif method == "ping":
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {},
         }
 
     elif method == "tools/list":
@@ -97,7 +115,12 @@ def handle_request(req: dict) -> dict:
             return {
                 "jsonrpc": "2.0",
                 "id": req_id,
-                "error": {"code": -32000, "message": str(e)},
+                "result": {
+                    "content": [
+                        {"type": "text", "text": f"Error: {e}"}
+                    ],
+                    "isError": True,
+                },
             }
 
     return {
@@ -115,9 +138,12 @@ def main():
             continue
         try:
             req = json.loads(line)
+            if not isinstance(req, dict):
+                continue
             resp = handle_request(req)
-            sys.stdout.write(json.dumps(resp) + "\n")
-            sys.stdout.flush()
+            if resp is not None:
+                sys.stdout.write(json.dumps(resp) + "\n")
+                sys.stdout.flush()
         except Exception as e:
             err_resp = {
                 "jsonrpc": "2.0",
