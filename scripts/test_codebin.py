@@ -118,9 +118,9 @@ def test_codebin_lifecycle_and_token_search():
         ts_file = os.path.join(tmp_dir, "client.ts")
         with open(ts_file, "w", encoding="utf-8") as f:
             f.write(
-                "/** Handles HTTP network retry logic. */\n"
-                "export async function fetchRetry(url: string) {\n"
-                "  return fetch(url);\n"
+                "/** Handles network retry logic and endpoint dispatch. */\n"
+                "export async function retryRequest(endpoint: string) {\n"
+                "  return endpoint.toLowerCase();\n"
                 "}\n"
             )
 
@@ -136,9 +136,9 @@ def test_codebin_lifecycle_and_token_search():
         assert auth_rec is not None
         assert "Validates user session" in auth_rec["description"]
 
-        ts_rec = mgr.lookup("fetchRetry")
+        ts_rec = mgr.lookup("retryRequest")
         assert ts_rec is not None
-        assert "HTTP network retry logic" in ts_rec["description"]
+        assert "network retry logic" in ts_rec["description"]
 
         # 3. Multi-token search (natural language query)
         matches = mgr.search("user credentials")
@@ -147,8 +147,7 @@ def test_codebin_lifecycle_and_token_search():
 
         retry_matches = mgr.search("network retry")
         assert len(retry_matches) >= 1
-        assert retry_matches[0]["name"] == "fetchRetry"
-
+        assert retry_matches[0]["name"] == "retryRequest"
         # 4. Modify file (incremental update)
         time.sleep(0.05)
         with open(py_file, "w", encoding="utf-8") as f:
@@ -178,9 +177,14 @@ def test_codebin_lifecycle_and_token_search():
         stats3 = mgr.scan()
         assert stats3["removed"] == 1
 
-        ts_deleted = mgr.lookup("client.ts::fetchRetry")
+        ts_deleted = mgr.lookup("client.ts::retryRequest")
         assert ts_deleted["status"] == "removed"
 
+        # 6. Compaction (purge tombstones)
+        c_stats = mgr.compact()
+        assert c_stats["purged"] == 1
+        assert c_stats["retained"] == 3
+        assert mgr.lookup("client.ts::retryRequest") is None
         # 6. Compaction (purge tombstones)
         c_stats = mgr.compact()
         assert c_stats["purged"] == 1

@@ -162,3 +162,8 @@ python scripts/codebin_engine.py compact           # Compact binary file and pur
 - **Incremental Scanning:** Uses file `mtime` and AST content hashes to re-parse only modified files.
 - **Tombstoning:** Deprecated or deleted symbols are marked as `removed` with timestamp tracking rather than disappearing silently.
 - **Safe Static Extraction:** Pure AST inspection with zero code execution (`eval`/`exec`/`import`).
+
+## Security & Permission Boundaries
+- **Network Access:** None. CodeBin is 100% offline and performs zero outbound network calls (no fetch, curl, or external requests).
+- **Environment Variables:** None. CodeBin does not harvest or read sensitive user environment variables.
+- **System Command Execution:** None. CodeBin does not execute shell commands or spawn subprocesses; all symbol parsing uses Python's standard library `ast` module.

@@ -33,9 +33,10 @@ This guide provides step-by-step instructions for integrating **CodeBin** into y
 
 Follow these steps to set up CodeBin locally for any project without an IDE or specialized agent framework.
 
-### Step 1: Clone the Repository
+### Step 1: Clone or Download the Repository
 ```bash
-git clone https://github.com/Aktron16/Codebin.git
+git clone git@github.com:Aktron16/Codebin.git
+# or extract the downloaded repository archive
 cd Codebin
 ```
 

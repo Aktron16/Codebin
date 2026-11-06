@@ -15,5 +15,8 @@ node_modules/
 git_status.txt
 package.json
 package-lock.json
+verify.js
+runner.js
+*.txt
 
 *.bak

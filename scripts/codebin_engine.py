@@ -12,7 +12,6 @@ import json
 import os
 import re
 import struct
-import subprocess
 import sys
 import time
 import zlib
@@ -107,8 +106,8 @@ def file_lock(filepath: str, exclusive: bool = True):
         except OSError:
             pass
 
-    f = open(lock_file, "w")
-    try:
+    fd = os.open(lock_file, os.O_CREAT | os.O_RDWR, 0o644)
+    with os.fdopen(fd, "r+", encoding="utf-8") as f:
         if os.name == "nt":
             import msvcrt
             mode = msvcrt.LK_NBLCK if exclusive else msvcrt.LK_NBRLCK
@@ -124,26 +123,27 @@ def file_lock(filepath: str, exclusive: bool = True):
             import fcntl
             flags = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
             fcntl.flock(f.fileno(), flags)
-        yield
-    finally:
         try:
-            if os.name == "nt":
-                import msvcrt
-                try:
-                    msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
-                except OSError:
-                    pass
-            else:
-                import fcntl
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-        except Exception:
-            pass
-        f.close()
-        try:
-            if os.path.exists(lock_file):
-                os.remove(lock_file)
-        except OSError:
-            pass
+            yield
+        finally:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+                    try:
+                        msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+                    except OSError:
+                        pass
+                else:
+                    import fcntl
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            except Exception:
+                pass
+            try:
+                if os.path.exists(lock_file):
+                    os.remove(lock_file)
+            except OSError:
+                pass
+
 
 
 def current_time_ms() -> int:

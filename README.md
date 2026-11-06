@@ -18,7 +18,8 @@ Instead of reading through every single page from the beginning, CodeBin scans y
 
 ### Method 1: Git Clone (Quickstart)
 ```bash
-git clone https://github.com/Aktron16/Codebin.git
+git clone git@github.com:Aktron16/Codebin.git
+# or extract the downloaded repository archive
 cd Codebin
 ```
 
@@ -105,20 +106,14 @@ python scripts/codebin_engine.py compact
 
 ---
 
-## GitHub CLI Integration
+## Security & Local Sandbox Architecture
 
-CodeBin includes remote repository and binary cache synchronization capabilities:
-
-```bash
-# Clone any GitHub repository and immediately generate a binary index
-python scripts/codebin_gh.py clone-index owner/repo
-
-# Initialize git tracking and stage initial commit
-python scripts/codebin_gh.py init-repo -m "Initial commit"
-
-# Push local commits to origin main
-python scripts/codebin_gh.py push --branch main
-```
+CodeBin operates 100% locally and offline:
+- **Zero Outbound Network Calls:** No remote network queries (`fetch`, `curl`, `urllib`).
+- **Zero Environment Variable Harvesting:** Does not access sensitive API tokens or user credentials.
+- **Zero Arbitrary Shell Execution:** Pure static Abstract Syntax Tree (AST) parsing with no shell subprocesses.
+- **Prompt Injection Defense:** Untrusted metadata wrapped in `<codebin_untrusted_metadata>` tags.
+- **Microsecond Speed:** Direct disk seek operations ($O(1)$) directly from `.codebin/symbols.bin`.
 
 ---
 
@@ -153,7 +148,6 @@ d:\Codebin\
     ├── codebin_engine.py                  # Core binary indexing engine with compression
     ├── tool_codebin.py                    # Tool definitions with CLI JSON data contract
     ├── mcp_server.py                      # Model Context Protocol stdio server
-    ├── codebin_gh.py                      # GitHub CLI & remote binary sync
     ├── setup_env.sh                       # Unix environment initialization
     ├── setup_env.bat                      # Windows environment initialization
     ├── test_codebin.py                    # Functional verification test suite

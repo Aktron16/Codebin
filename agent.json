@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "name": "codebin",
   "version": "1.0.0",
   "description": "CodeBin universal binary codebase memory platform for AI agents",
